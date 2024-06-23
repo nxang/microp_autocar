@@ -4,10 +4,10 @@
 #define BUTTON1_PIN A4
 #define BUTTON digitalRead(BUTTON1_PIN)
 
-#define IRCL_LED 2
+#define IRCL_LED 4
 #define IRCR_LED 3
-#define IRL_LED 4
-#define IRR_LED 7
+#define IRL_LED 7
+#define IRR_LED 2
 #define Button_LED 6
 #define Power_LED 5
 
@@ -24,9 +24,9 @@
 #define IRS A3   // Side IR
 // #define IRS A3  // Side IR
 
-#define Left_IR_Target 900   // tune this value
-#define Right_IR_Target 900  // tune this value
-#define Side_IR_Target 900   // tune this value
+#define Left_IR_Target 1023   // tune this value
+#define Right_IR_Target 1023  // tune this value
+#define Side_IR_Target 1000   // tune this value
 
 TimerEvent timer;
 TimerEvent button;
@@ -36,37 +36,61 @@ int SideInput;
 double LeftSetpoint, LeftInput, LeftOutput;
 double RightSetpoint, RightInput, RightOutput;
 
-double L_Kp = 2, L_Ki = 1, L_Kd = 0;
-double R_Kp = 2, R_Ki = 1, R_Kd = 0;
+double L_Kp = 1, L_Ki = 0, L_Kd = 0;
+double R_Kp = 1, R_Ki = 0, R_Kd = 0;
 
-PID LEFT_PID(&LeftInput, &LeftOutput, &LeftSetpoint, L_Kp, L_Ki, L_Kd, REVERSE);
-PID RIGHT_PID(&RightInput, &RightOutput, &RightSetpoint, R_Kp, R_Ki, R_Kd, REVERSE);
+PID LEFT_PID(&LeftInput, &LeftOutput, &LeftSetpoint, L_Kp, L_Ki, L_Kd, DIRECT);
+PID RIGHT_PID(&RightInput, &RightOutput, &RightSetpoint, R_Kp, R_Ki, R_Kd, DIRECT);
 
 uint8_t flag = 0;
 
 void timerCallback() {
-  // LEFT_PID.Compute();
-  // RIGHT_PID.Compute();
-  // analogWrite(EN1, -50);
-  // analogWrite(EN2, -100);
-      Serial.print(",centre left:");
-      Serial.print(LeftInput);
-      Serial.print(",centre right:");
-      Serial.print(RightInput);
-      Serial.print(",side:");
-      Serial.println(SideInput);
+  if (SideInput < Side_IR_Target && !flag) {  // stop line  detected
+    flag = 1;                                 // stop line detected
+    digitalWrite(IRL_LED, HIGH);
+    if (flag == 1) {
+      digitalWrite(IN1, LOW);  // stop the motor
+      digitalWrite(IN2, LOW);
+      digitalWrite(IN3, LOW);
+      digitalWrite(IN4, LOW);
+    }
+    // while (!BUTTON);                      
+    digitalWrite(IN1, HIGH);  // turn on the motor see which direction it goes
+    digitalWrite(IN2, LOW);
+    digitalWrite(IN3, HIGH);
+    digitalWrite(IN4, LOW);
+    analogWrite(EN1, 255);  //small boost
+    analogWrite(EN2, 255);  //small boost
+    // delay(1000);
+    flag = 0;  // reset the flag
+  } else {
+    digitalWrite(IRL_LED, LOW);
+  }
 
+  // if the value of the LEFT IR sensor is greater than the target value
+  if (LeftInput < Left_IR_Target) {  // left ir  detected
+    digitalWrite(IRCL_LED, HIGH);
+  } else {
+    digitalWrite(IRCL_LED, LOW);
+  }
+
+  // if the value of the RIGHT IR sensor is greater than the target value
+  if (RightInput < Right_IR_Target) {  // right ir  detected
+    digitalWrite(IRCR_LED, HIGH);
+  } else {
+    digitalWrite(IRCR_LED, LOW);
+  }
 
 }
 
 void ButtonCallback() {
-    // Serial.println("hoo");
 
   if (BUTTON) {  // if button is pressed
     digitalWrite(Button_LED, HIGH);
   } else {  // if button is not pressed
     digitalWrite(Button_LED, LOW);
   }
+
 }
 
 
@@ -74,14 +98,33 @@ void StatusCallback() {
   SideInput = analogRead(IRS);
   LeftInput = analogRead(IRCL);
   RightInput = analogRead(IRCR);
+
+  LEFT_PID.Compute();
+  RIGHT_PID.Compute();
+
+  analogWrite(EN1, 190+(LeftOutput/255));
+  analogWrite(EN2, 190+(RightOutput/255));
+
+  Serial.print("Left:");
+  Serial.print(LeftInput);
+  Serial.print(",Right:");
+  Serial.print(RightInput);
+  Serial.print(",side:");
+  Serial.print(SideInput);
+  Serial.print(",LeftOutput:");
+  Serial.print(190+(LeftOutput/255)*65);
+  Serial.print(",RightOutput:");
+  Serial.println(190+(RightOutput/255)*65);
+
 }
 
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
-  timer.set(5, timerCallback);    // Call timerCallback every 2 milliseconds (1 second)
-  button.set(1, ButtonCallback);  // Call timerCallback every 2 milliseconds (1 second)
-  status.set(1, StatusCallback);
+  timer.set(2, timerCallback);    
+  button.set(1, ButtonCallback);  
+  status.set(2, StatusCallback);
+
   // setup the pin for me
   pinMode(BUTTON1_PIN, INPUT);
 
@@ -114,9 +157,6 @@ void setup() {
   RIGHT_PID.SetSampleTime(2);
 
   digitalWrite(Power_LED, HIGH);  // turn on the power LED
-  // digitalWrite(Button_LED, HIGH);  // turn on the power LED
-  // digitalWrite(IRR_LED, HIGH);  // turn on the power LEDHIGH
-  // digitalWrite(IRL_LED, HIGH);  // turn on the power LED
 }
 
 void loop() {
@@ -127,55 +167,5 @@ void loop() {
   digitalWrite(IN2, HIGH);
   digitalWrite(IN3, HIGH);
   digitalWrite(IN4, LOW);
-  analogWrite(9, 120);   //s
-  analogWrite(10, 120);  //s
 
-  // /***************************************************** IR START *****************************************************/
-  // // read the value of the IR sensor
-
-  // // if the value of the SIDE IR sensor is greater than the target value
-  // if (SideInput < Side_IR_Target && !flag) {  // stop line  detected
-  //   flag = 1;                                 // stop line detected
-  //   digitalWrite(IRS_LED, HIGH);
-  //   if (flag == 1) {
-  //     digitalWrite(IN1, LOW);  // stop the motor
-  //     digitalWrite(IN2, LOW);
-  //     digitalWrite(IN3, LOW);
-  //     digitalWrite(IN4, LOW);
-  //   }
-  //   while (!BUTTON)
-  //     ;                       // wait for the button to be pressed
-  //   digitalWrite(IN1, HIGH);  // turn on the motor see which direction it goes
-  //   digitalWrite(IN2, LOW);
-  //   digitalWrite(IN3, HIGH);
-  //   digitalWrite(IN4, LOW);
-  //   analogWrite(EN1, 255);  //small boost
-  //   analogWrite(EN2, 255);  //small boost
-  //   delay(1000);
-  //   flag = 0;  // reset the flag
-  // } else {
-  //   digitalWrite(IRS_LED, LOW);
-  // }
-
-  // // if the value of the LEFT IR sensor is greater than the target value
-  // if (LeftInput < Left_IR_Target) {  // left ir  detected
-  //   LEFT_PID.SetControllerDirection(DIRECT);
-  //   digitalWrite(IRL_LED, HIGH);
-  // } else {
-  //   LEFT_PID.SetControllerDirection(REVERSE);
-  //   digitalWrite(IRL_LED, LOW);
-  // }
-
-  // // if the value of the RIGHT IR sensor is greater than the target value
-  // if (RightInput < Right_IR_Target) {  // right ir  detected
-
-  //   RIGHT_PID.SetControllerDirection(DIRECT);
-  //   digitalWrite(IRR_LED, HIGH);
-  // } else {
-  //   RIGHT_PID.SetControllerDirection(REVERSE);
-  //   digitalWrite(IRR_LED, LOW);
-  // }
-
-  /***************************************************** IR END *****************************************************/
-  /***************************************************** END *****************************************************/
 }
