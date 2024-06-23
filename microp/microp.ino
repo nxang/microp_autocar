@@ -1,11 +1,11 @@
 #include <PID_v1.h>
 #include <TimerEvent.h>
 
-#define BUTTON1_PIN A5
+#define BUTTON1_PIN A4
 #define BUTTON digitalRead(BUTTON1_PIN)
 
-#define IRS1_LED 2
-#define IRS2_LED 3
+#define IRCL_LED 2
+#define IRCR_LED 3
 #define IRL_LED 4
 #define IRR_LED 7
 #define Button_LED 6
@@ -19,16 +19,18 @@
 #define IN3 12
 #define IN4 13
 
-#define IRS A2  // Side IR
-#define IRL A3  // left IR
-#define IRR A4  // right IR
+#define IRCL A1  // left IR
+#define IRCR A2  // right IR
+#define IRS A3   // Side IR
+// #define IRS A3  // Side IR
 
 #define Left_IR_Target 900   // tune this value
 #define Right_IR_Target 900  // tune this value
 #define Side_IR_Target 900   // tune this value
 
 TimerEvent timer;
-TimerEvent timer1;
+TimerEvent button;
+TimerEvent status;
 
 int SideInput;
 double LeftSetpoint, LeftInput, LeftOutput;
@@ -41,17 +43,50 @@ PID LEFT_PID(&LeftInput, &LeftOutput, &LeftSetpoint, L_Kp, L_Ki, L_Kd, REVERSE);
 PID RIGHT_PID(&RightInput, &RightOutput, &RightSetpoint, R_Kp, R_Ki, R_Kd, REVERSE);
 
 uint8_t flag = 0;
+
+void timerCallback() {
+  // LEFT_PID.Compute();
+  // RIGHT_PID.Compute();
+  // analogWrite(EN1, -50);
+  // analogWrite(EN2, -100);
+      Serial.print(",centre left:");
+      Serial.print(LeftInput);
+      Serial.print(",centre right:");
+      Serial.print(RightInput);
+      Serial.print(",side:");
+      Serial.println(SideInput);
+
+
+}
+
+void ButtonCallback() {
+    // Serial.println("hoo");
+
+  if (BUTTON) {  // if button is pressed
+    digitalWrite(Button_LED, HIGH);
+  } else {  // if button is not pressed
+    digitalWrite(Button_LED, LOW);
+  }
+}
+
+
+void StatusCallback() {
+  SideInput = analogRead(IRS);
+  LeftInput = analogRead(IRCL);
+  RightInput = analogRead(IRCR);
+}
+
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
-  timer.set(5, timerCallback);  // Call timerCallback every 2 milliseconds (1 second)
-  timer1.set(2, ButtonCallback);  // Call timerCallback every 2 milliseconds (1 second)
-
+  timer.set(5, timerCallback);    // Call timerCallback every 2 milliseconds (1 second)
+  button.set(1, ButtonCallback);  // Call timerCallback every 2 milliseconds (1 second)
+  status.set(1, StatusCallback);
   // setup the pin for me
   pinMode(BUTTON1_PIN, INPUT);
 
-  pinMode(IRS1_LED, OUTPUT);
-  pinMode(IRS2_LED, OUTPUT);
+  pinMode(IRCL_LED, OUTPUT);
+  pinMode(IRCR_LED, OUTPUT);
   pinMode(IRL_LED, OUTPUT);
   pinMode(IRR_LED, OUTPUT);
   pinMode(Button_LED, OUTPUT);
@@ -65,9 +100,9 @@ void setup() {
   pinMode(IN3, OUTPUT);
   pinMode(IN4, OUTPUT);
 
-  pinMode(IRS, INPUT);
-  pinMode(IRL, INPUT);
-  pinMode(IRR, INPUT);
+  pinMode(A1, INPUT);
+  pinMode(A2, INPUT);
+  pinMode(A3, INPUT);
 
   LeftSetpoint = Left_IR_Target;
   RightSetpoint = Right_IR_Target;
@@ -80,23 +115,23 @@ void setup() {
 
   digitalWrite(Power_LED, HIGH);  // turn on the power LED
   // digitalWrite(Button_LED, HIGH);  // turn on the power LED
-  // digitalWrite(IRR_LED, HIGH);  // turn on the power LED
+  // digitalWrite(IRR_LED, HIGH);  // turn on the power LEDHIGH
   // digitalWrite(IRL_LED, HIGH);  // turn on the power LED
 }
 
 void loop() {
-
-  Serial.println(digitalRead(BUTTON1_PIN));
-  // digitalWrite(IN1, HIGH);  // turn on the motor see which direction it goes
-  // digitalWrite(IN2, LOW);
-  // digitalWrite(IN3, HIGH);
-  // digitalWrite(IN4, LOW);
+  timer.update();
+  button.update();
+  status.update();
+  digitalWrite(IN1, LOW);  // turn on the motor see which direction it goes
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+  analogWrite(9, 120);   //s
+  analogWrite(10, 120);  //s
 
   // /***************************************************** IR START *****************************************************/
   // // read the value of the IR sensor
-  // SideInput = analogRead(IRS);
-  // LeftInput = analogRead(IRL);
-  // RightInput = analogRead(IRR);
 
   // // if the value of the SIDE IR sensor is greater than the target value
   // if (SideInput < Side_IR_Target && !flag) {  // stop line  detected
@@ -143,18 +178,4 @@ void loop() {
 
   /***************************************************** IR END *****************************************************/
   /***************************************************** END *****************************************************/
-}
-
-void timerCallback() {
-
-  LEFT_PID.Compute();
-  RIGHT_PID.Compute();
-  analogWrite(EN1, LeftOutput);
-  analogWrite(EN2, RightOutput);
-}
-
-void ButtonCallback() {
-  // put your main code here, to run repeatedly:
-
-
 }
