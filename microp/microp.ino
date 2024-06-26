@@ -58,10 +58,9 @@ void Turn_Right() {
   - the last line will keep on checking the centre left IR input so that it knows when to exit the condition
   */
   while (LeftInput < Left_IR_Target) {
-    digitalWrite(LMOTOR_LED, HIGH);   // turn on the power LED
-    digitalWrite(RMOTOR_LED, LOW);  // turn on the power LED
-
-    digitalWrite(IN1, LOW);  // turn on the motor see which direction it goes
+    digitalWrite(LMOTOR_LED, HIGH);   
+    digitalWrite(RMOTOR_LED, LOW);  
+    digitalWrite(IN1, LOW);  
     digitalWrite(IN2, HIGH);
     digitalWrite(IN3, HIGH);
     digitalWrite(IN4, LOW);
@@ -73,8 +72,8 @@ void Turn_Right() {
 
 void Turn_Left() { //same as turn right just opposite direction and ir sensors
   while (RightInput < Right_IR_Target) {
-    digitalWrite(LMOTOR_LED, LOW);   // turn on the power LED
-    digitalWrite(RMOTOR_LED, HIGH);  // turn on the power LED
+    digitalWrite(LMOTOR_LED, LOW);   
+    digitalWrite(RMOTOR_LED, HIGH); 
 
     digitalWrite(IN1, LOW);  
     digitalWrite(IN2, HIGH);
@@ -90,10 +89,10 @@ void Turn_Left() { //same as turn right just opposite direction and ir sensors
 
 
 void Straight() { 
-  digitalWrite(LMOTOR_LED, HIGH);   // turn on the power LED
-  digitalWrite(RMOTOR_LED, HIGH);  // turn on the power LED
+  digitalWrite(LMOTOR_LED, HIGH);   
+  digitalWrite(RMOTOR_LED, HIGH); 
 
-  analogWrite(EN1, 150 + (LeftOutput / 255) * 100); //adjust the moving straight motion with basespeed + pid
+  analogWrite(EN1, 150 + (LeftOutput / 255) * 100); //adjust the moving straight motion with basespeed + pid, to ensure it moves straight
   analogWrite(EN2, 150 + (RightOutput / 255) * 100);
   digitalWrite(IN1, LOW);  
   digitalWrite(IN2, HIGH);
@@ -102,8 +101,8 @@ void Straight() {
 }
 
 void Boost() { //to rush off from the black line
-  digitalWrite(LMOTOR_LED, HIGH);   // turn on the power LED
-  digitalWrite(RMOTOR_LED, HIGH);  // turn on the power LED
+  digitalWrite(LMOTOR_LED, HIGH);  
+  digitalWrite(RMOTOR_LED, HIGH); 
 
   analogWrite(EN1, 255);
   analogWrite(EN2, 255);
@@ -135,8 +134,8 @@ void timerCallback() { // loops that determine which IR have scanned the black l
   if (LeftInput > Left_IR_Target && RightInput > Right_IR_Target && (SideRightInput > Side_Right_IR_Target || SideLeftInput > Side_Left_IR_Target)) {  //side left or side right ir + centre two ir detected then we know need to stop
     while (!BUTTON) { //stuck until u press the button 
       Serial.println(SideLeftInput);
-      digitalWrite(LMOTOR_LED, LOW);  // turn on the power LED
-      digitalWrite(RMOTOR_LED, LOW);  // turn on the power LED
+      digitalWrite(LMOTOR_LED, LOW); 
+      digitalWrite(RMOTOR_LED, LOW);
       digitalWrite(IN1, HIGH);        // all the IN high to emergency break
       digitalWrite(IN2, HIGH);
       digitalWrite(IN3, HIGH);
