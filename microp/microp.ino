@@ -118,7 +118,7 @@ void Boost() { //to rush off from the black line
 
 
 void timerCallback() { // loops that determine which IR have scanned the black line 
-  if (LeftInput > Left_IR_Target) {  // centre left ir  detected
+  if (LeftInput > Left_IR_Target) {  // centre left ir detected
     digitalWrite(IRCL_LED, HIGH);
     Straight();
   } else {
