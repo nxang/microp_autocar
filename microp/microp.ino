@@ -29,7 +29,6 @@ you can check the current value and tune it based on the value you get
 Ex:
 the value range you read is from 100 - 600
 you can set the value as 300/200 etc
-
 */
 #define Left_IR_Target 300        // tune this value 
 #define Right_IR_Target 300       // tune this value
@@ -77,7 +76,7 @@ void Turn_Left() { //same as turn right just opposite direction and ir sensors
     digitalWrite(LMOTOR_LED, LOW);   // turn on the power LED
     digitalWrite(RMOTOR_LED, HIGH);  // turn on the power LED
 
-    digitalWrite(IN1, LOW);  // turn on the motor see which direction it goes
+    digitalWrite(IN1, LOW);  
     digitalWrite(IN2, HIGH);
     digitalWrite(IN3, HIGH);
     digitalWrite(IN4, LOW);
@@ -96,7 +95,7 @@ void Straight() {
 
   analogWrite(EN1, 150 + (LeftOutput / 255) * 100); //adjust the moving straight motion with basespeed + pid
   analogWrite(EN2, 150 + (RightOutput / 255) * 100);
-  digitalWrite(IN1, LOW);  // turn on the motor see which direction it goes
+  digitalWrite(IN1, LOW);  
   digitalWrite(IN2, HIGH);
   digitalWrite(IN3, HIGH);
   digitalWrite(IN4, LOW);
@@ -108,7 +107,7 @@ void Boost() { //to rush off from the black line
 
   analogWrite(EN1, 255);
   analogWrite(EN2, 255);
-  digitalWrite(IN1, LOW);  // turn on the motor see which direction it goes
+  digitalWrite(IN1, LOW);  
   digitalWrite(IN2, HIGH);
   digitalWrite(IN3, HIGH);
   digitalWrite(IN4, LOW);
